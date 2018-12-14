@@ -1,19 +1,14 @@
-package com.zhongkouwei.blog.server.model;
+package com.zhongkouwei.blog.common.dto;
 
+import com.zhongkouwei.blog.common.model.Floor;
 import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
-@Document(collection = "m_blog")
 @Data
-public class Blog implements Serializable {
+public class BlogDTO {
 
-    private static final long serialVersionUID = -8007968219168855917L;
-
-    @Id
     private String blogId;
 
     private String blogName;
@@ -31,11 +26,14 @@ public class Blog implements Serializable {
     /**
      * 楼层数量
      */
-    private Integer sections;
+    private Integer floorNum;
 
     /**
      *  1 加精   0：非
      */
     private Byte boutique;
+
+    private List<Floor> floors;
+
 
 }

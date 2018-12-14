@@ -1,4 +1,4 @@
-package com.zhongkouwei.blog.server.model;
+package com.zhongkouwei.blog.common.model;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
@@ -14,9 +14,12 @@ public class BlogContent {
     @Id
     private String blogId;
 
-    private List<Section> sections=new ArrayList<>();
+    private List<Floor> sections;
 
-    public void setSection(Section section){
+    public void setSection(Floor section) {
+        if (sections == null || sections.size() == 0) {
+            sections = new ArrayList<>();
+        }
         sections.add(section);
     }
 

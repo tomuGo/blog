@@ -1,7 +1,6 @@
 package com.zhongkouwei.blog.server.config;
 
 import com.mongodb.MongoClient;
-import com.zhongkouwei.blog.model.MongoTest;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
