@@ -1,10 +1,10 @@
 package com.zhongkouwei.blog.server.controller;
 
-import com.zhongkouwei.blog.server.dto.AddBlogDTO;
-import com.zhongkouwei.blog.server.dto.BlogDTO;
-import com.zhongkouwei.blog.server.model.Blog;
-import com.zhongkouwei.blog.server.model.BlogType;
-import com.zhongkouwei.blog.server.model.Section;
+import com.zhongkouwei.blog.common.dto.AddBlogDTO;
+import com.zhongkouwei.blog.common.dto.BlogDTO;
+import com.zhongkouwei.blog.common.enums.BlogType;
+import com.zhongkouwei.blog.common.model.Blog;
+import com.zhongkouwei.blog.common.model.Floor;
 import com.zhongkouwei.blog.server.repository.BlogContentRepository;
 import com.zhongkouwei.blog.server.repository.BlogRepository;
 import com.zhongkouwei.blog.server.service.BlogService;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 
 @RestController
@@ -30,8 +29,8 @@ public class BlogController {
     BlogContentRepository blogContentRepository;
 
     @RequestMapping(value = "blog", method = RequestMethod.POST)
-    public ResultSub<Boolean> addBlog(@RequestBody AddBlogDTO addBlogDTO) {
-        blogService.addBlog(addBlogDTO, null);
+    public ResultSub<Boolean> addBlog(@RequestBody BlogDTO blogDTO) {
+        blogService.addBlog(blogDTO);
         return new ResultSub<>(Boolean.TRUE);
     }
 
@@ -55,8 +54,8 @@ public class BlogController {
     }
 
     @RequestMapping(value = "blog/{id}/addSection", method = RequestMethod.POST)
-    public ResultSub<Boolean> addSection(@PathVariable("id") String blogId, @RequestBody Section section, HttpServletRequest request) {
-        section.setCreateDate(new Date());
+    public ResultSub<Boolean> addSection(@PathVariable("id") String blogId, @RequestBody Floor section) {
+        section.setCreateTime(new Date());
         blogService.addSection(section, blogId);
         return new ResultSub<>(Boolean.TRUE);
     }

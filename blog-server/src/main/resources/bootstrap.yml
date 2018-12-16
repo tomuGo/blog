@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: blog
+server:
+  port: 8093
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
