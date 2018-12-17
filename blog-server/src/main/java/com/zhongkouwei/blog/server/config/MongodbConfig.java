@@ -19,7 +19,7 @@ import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
 @ConfigurationProperties(prefix = "spring.data.mongodb")
 @Getter
 @Setter
-public class MongoJdbcConfig {
+public class MongodbConfig {
 
     String host;
 

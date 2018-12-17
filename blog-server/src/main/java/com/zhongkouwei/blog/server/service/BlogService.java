@@ -70,7 +70,7 @@ public class BlogService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void addBlog(BlogDTO blogDTO) {
+    public String addBlog(BlogDTO blogDTO) {
         validatorService.validate(blogDTO,BlogGroup.insertBlog.class);
         Blog blog=new Blog();
         BeanUtils.copyProperties(blogDTO,blog);
@@ -79,6 +79,7 @@ public class BlogService {
         blogContent.setBlogId(blogSaved.getBlogId());
         blogContent.setSections(blogDTO.getFloors());
         blogContentRepository.save(blogContent);
+        return blogSaved.getBlogId();
     }
 
     public void addSection(Floor section, String blogId) {

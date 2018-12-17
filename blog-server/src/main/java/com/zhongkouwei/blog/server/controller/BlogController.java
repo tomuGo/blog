@@ -1,8 +1,7 @@
 package com.zhongkouwei.blog.server.controller;
 
-import com.zhongkouwei.blog.common.dto.AddBlogDTO;
+import com.zhongkouwei.blog.common.BlogConstants;
 import com.zhongkouwei.blog.common.dto.BlogDTO;
-import com.zhongkouwei.blog.common.enums.BlogType;
 import com.zhongkouwei.blog.common.model.Blog;
 import com.zhongkouwei.blog.common.model.Floor;
 import com.zhongkouwei.blog.server.repository.BlogContentRepository;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 
 @RestController
+@RequestMapping(value = BlogConstants.APP_PATH)
 public class BlogController {
 
     @Autowired
@@ -29,9 +29,9 @@ public class BlogController {
     BlogContentRepository blogContentRepository;
 
     @RequestMapping(value = "blog", method = RequestMethod.POST)
-    public ResultSub<Boolean> addBlog(@RequestBody BlogDTO blogDTO) {
-        blogService.addBlog(blogDTO);
-        return new ResultSub<>(Boolean.TRUE);
+    public ResultSub<String> addBlog(@RequestBody BlogDTO blogDTO) {
+        String blogId=blogService.addBlog(blogDTO);
+        return new ResultSub<>(blogId);
     }
 
     @RequestMapping(value = "blog", method = RequestMethod.GET)
@@ -41,15 +41,12 @@ public class BlogController {
                                           @RequestParam(value = "orderType", required = false) String orderType,
                                           @RequestParam(value = "userId", required = false) Integer userId,
                                           @RequestParam(value = "blogType", required = false) Byte blogType,
+                                          @RequestParam(value = "boutique", required = false) Byte boutique,
                                           @RequestParam(value = "blogName", required = false) String blogName) {
-        Byte boutique = null;
-        if (blogType != null && blogType.equals(BlogType.GOOD.getBlogType())) {
-            boutique = 1;
-            blogType = null;
-        }
+
         Criteria criteria = MongoService.convertCriteria(blogName, blogType, userId, boutique);
-        Pageable pageable = MongoService.convertPageable(pageNumber, pageSize, orderName, orderType);
-        Page<Blog> blogs = blogService.getBlogs(pageable, criteria);
+        Pageable pageable = MongoService.convertPageable(pageNumber-1, pageSize, orderName, orderType);
+        Page<Blog> blogs = blogService.getBlogs(pageable,criteria);
         return new ResultSub<>(blogs);
     }
 

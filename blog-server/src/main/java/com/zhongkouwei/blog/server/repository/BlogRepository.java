@@ -10,8 +10,8 @@ import java.util.List;
 
 public interface BlogRepository extends MongoRepository<Blog,String> {
 
-    Page<Blog> findByAuthorAndBlogTypeAndBlogNameIsLike(
-            @Param("userId") Integer userId, @Param("blogType") String blogType, @Param("blogName") String blogName, Pageable pageable);
+    Page<Blog> findByAuthorAndBlogTypeAndBlogNameIsLikeAndBoutique(
+            @Param("userId") Integer userId, @Param("blogType") Byte blogType, @Param("blogName") String blogName,@Param("boutique")Byte boutique, Pageable pageable);
 
     List<Blog> findByBlogId(String blogId);
 }
