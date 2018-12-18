@@ -1,15 +1,15 @@
 package com.zhongkouwei.blog.server.service;
 
 
-import com.zhongkouwei.blog.common.dto.AddBlogDTO;
 import com.zhongkouwei.blog.common.dto.BlogDTO;
-import com.zhongkouwei.blog.common.enums.BlogType;
 import com.zhongkouwei.blog.common.group.BlogGroup;
 import com.zhongkouwei.blog.common.model.Blog;
 import com.zhongkouwei.blog.common.model.BlogContent;
 import com.zhongkouwei.blog.common.model.Floor;
+import com.zhongkouwei.blog.common.model.PageInfo;
 import com.zhongkouwei.blog.server.repository.BlogContentRepository;
 import com.zhongkouwei.blog.server.repository.BlogRepository;
+import com.zhongkouwei.blog.server.util.RedisLock;
 import com.zhongkouwei.blog.server.util.RedisUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +19,10 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.*;
 
 @Service
 public class BlogService {
@@ -37,77 +37,62 @@ public class BlogService {
     RedisUtil redisUtil;
     @Autowired
     ValidatorService validatorService;
-
-    /**
-     * 线程阻塞队列
-     */
-    private static BlockingQueue BlockingQueue = new ArrayBlockingQueue(10);
-
-    /**
-     * 新增博客楼层操作时，将该博客的相关信息进行修改的线程池
-     */
-    private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5, 10, 1, TimeUnit.MINUTES, BlockingQueue);
-
-
-    @Transactional(rollbackFor = Exception.class)
-    public void   addBlog2(AddBlogDTO addBlogDTO, Integer userId) {
-        Date createTime = new Date();
-        //保存博客内容部分
-        BlogContent blogContent = new BlogContent();
-        Floor section = new Floor(addBlogDTO.getContent(), userId, "", createTime);
-        blogContent.setSection(section);
-        BlogContent contentSaved = blogContentRepository.save(blogContent);
-        //保存博客标题等信息
-        Blog blog = new Blog();
-        blog.setBlogId(contentSaved.getBlogId());
-        blog.setAuthor(userId);
-        blog.setCreateTime(createTime);
-        blog.setBlogName(addBlogDTO.getBlogName());
-        blog.setBlogType(addBlogDTO.getBlogType());
-        blogRepository.save(blog);
-        String key = BlogType.getBlogKey(blog.getBlogType());
-        redisUtil.saveBlog(key, blog);
-    }
+    @Autowired
+    RedisLock redisLock;
 
     @Transactional(rollbackFor = Exception.class)
     public String addBlog(BlogDTO blogDTO) {
-        validatorService.validate(blogDTO,BlogGroup.insertBlog.class);
-        Blog blog=new Blog();
-        BeanUtils.copyProperties(blogDTO,blog);
-        Blog blogSaved=blogRepository.save(blog);
-        BlogContent blogContent=new BlogContent();
+        validatorService.validate(blogDTO, BlogGroup.insertBlog.class);
+
+        Blog blog = new Blog();
+        Date createTime = new Date();
+        BeanUtils.copyProperties(blogDTO, blog);
+        blog.setCreateTime(createTime);
+        blog.setBlogNums(1);
+        Blog blogSaved = blogRepository.save(blog);
+
+        Floor floor = new Floor();
+        floor.setCreateTime(createTime);
+        floor.setFloorId(1);
+        floor.setAuthorName(blogDTO.getAuthorName());
+        floor.setUserId(blogDTO.getAuthor());
+        floor.setContent(blogDTO.getFloorOne());
+        BlogContent blogContent = new BlogContent();
         blogContent.setBlogId(blogSaved.getBlogId());
-        blogContent.setSections(blogDTO.getFloors());
+        blogContent.setFloor(floor);
         blogContentRepository.save(blogContent);
+
         return blogSaved.getBlogId();
     }
 
-    public void addSection(Floor section, String blogId) {
+    public Integer addSection(Floor section, String blogId) {
         BlogContent blogContent = blogContentRepository.findOne(blogId);
-        blogContent.setSection(section);
+
+        int floorId = redisUtil.generateFloorId(blogId);
+        section.setCreateTime(new Date());
+        section.setFloorId(floorId);
+        blogContent.setFloor(section);
         blogContentRepository.save(blogContent);
-        threadPoolExecutor.execute(new Runnable() {
+
+        Thread updateBlog = new Thread(new Runnable() {
             @Override
             public void run() {
-                Blog blog = blogRepository.findOne(blogId);
-                if (blog != null) {
-                    Integer sections = blog.getBlogNums() + 1;
-                    blog.setBlogNums(sections);
-                    blog.setLastModifeTime(new Date());
-                    blogRepository.save(blog);
-                }
+                tryBlogIDLock(blogId);
             }
         });
+        updateBlog.start();
+
+        return floorId;
 
     }
 
-    public Page<Blog> getBlogs(Pageable pageable, Criteria criteria) {
+    public PageInfo<Blog> getBlogs(Pageable pageable, Criteria criteria) {
         Query query = new Query(criteria);
         query.with(pageable);
         List<Blog> blogList = mongoTemplate.find(query, Blog.class);
         Long count = mongoTemplate.count(query, Blog.class);
-        Page<Blog> pages = new PageImpl<>(blogList, pageable, count);
-        return pages;
+        PageInfo<Blog> blogPageInfo = new PageInfo<>(blogList, pageable.getPageNumber() + 1, pageable.getPageSize(), count);
+        return blogPageInfo;
     }
 
     public BlogDTO getBlogDto(String blogId) {
@@ -115,13 +100,39 @@ public class BlogService {
         Blog blog = blogRepository.findOne(blogId);
         BlogDTO blogDTO = new BlogDTO();
         if (blogContent != null) {
-            blogDTO.setFloors(blogContent.getSections());
+            blogDTO.setFloors(blogContent.getFloors());
         }
         if (blog != null) {
             BeanUtils.copyProperties(blog, blogDTO);
         }
         return blogDTO;
 
+    }
+
+    private void tryBlogIDLock(String blogId) {
+        String uuid = redisLock.lock(blogId);
+        int times = 0;
+        if (!StringUtils.isEmpty(uuid)) {
+            Blog blog = blogRepository.findOne(blogId);
+            if (blog != null) {
+                Integer sections = blog.getBlogNums() + 1;
+                blog.setBlogNums(sections);
+                blog.setLastModifeTime(new Date());
+                blogRepository.save(blog);
+            }
+            //开锁
+            redisLock.unlock(blogId, uuid);
+        } else {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            times++;
+            if (times < 20) {
+                tryBlogIDLock(blogId);
+            }
+        }
     }
 
 

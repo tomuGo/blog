@@ -40,7 +40,9 @@ public class BlogDTO {
     private Byte boutique;
 
     @NotNull(message = "博客1楼不能为空",groups = BlogGroup.insertBlog.class)
-    private List<Floor> floors;
+    private String floorOne;
+
+    private List<Floor>floors;
 
 
 }

@@ -14,13 +14,13 @@ public class BlogContent {
     @Id
     private String blogId;
 
-    private List<Floor> sections;
+    private List<Floor> floors;
 
-    public void setSection(Floor section) {
-        if (sections == null || sections.size() == 0) {
-            sections = new ArrayList<>();
+    public void setFloor(Floor section) {
+        if (floors == null || floors.size() == 0) {
+            floors = new ArrayList<>();
         }
-        sections.add(section);
+        floors.add(section);
     }
 
 }

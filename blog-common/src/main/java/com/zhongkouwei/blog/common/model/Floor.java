@@ -11,6 +11,11 @@ import java.util.Date;
 @NoArgsConstructor
 public class Floor {
 
+    /**
+     * 楼层 1楼 2楼
+     */
+    private Integer floorId;
+
     private String content;
 
     private Integer userId;
