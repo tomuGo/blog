@@ -7,7 +7,6 @@ import com.zhongkouwei.blog.common.model.Floor;
 import com.zhongkouwei.blog.common.model.PageInfo;
 import com.zhongkouwei.user.common.model.ResultSub;
 import org.springframework.cloud.netflix.feign.FeignClient;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.web.bind.annotation.*;
 
 @FeignClient(value = BlogConstants.APP)
