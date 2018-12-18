@@ -18,5 +18,5 @@ spring:
     mongodb:
       host: ubuntu
       port: 27017
-      database: test
+      database: blog
 zhongkouwei:

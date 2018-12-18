@@ -53,7 +53,8 @@ public class BlogService {
 
         Floor floor = new Floor();
         floor.setCreateTime(createTime);
-        floor.setFloorId(1);
+        int floorId = redisUtil.generateFloorId(blogSaved.getBlogId());
+        floor.setFloorId(floorId);
         floor.setAuthorName(blogDTO.getAuthorName());
         floor.setUserId(blogDTO.getAuthor());
         floor.setContent(blogDTO.getFloorOne());
