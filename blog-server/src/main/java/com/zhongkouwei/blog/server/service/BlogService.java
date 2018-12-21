@@ -49,6 +49,7 @@ public class BlogService {
         BeanUtils.copyProperties(blogDTO, blog);
         blog.setCreateTime(createTime);
         blog.setBlogNums(1);
+        blog.setBoutique((byte)0);
         Blog blogSaved = blogRepository.save(blog);
 
         Floor floor = new Floor();

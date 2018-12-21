@@ -32,7 +32,7 @@ public class MongoService {
 
     public static Pageable convertPageable(Integer pageNumber,Integer pageSize,String orderName,String orderType){
         if(StringUtils.isEmpty(orderType)){
-            orderType=" DESC ";
+            orderType=" ASC ";
         }
         if(StringUtils.isEmpty(orderName)){
             orderName=" blog_id ";
